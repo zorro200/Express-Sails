@@ -1,0 +1,72 @@
+doctype html
+head
+    title #{title}
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    link(rel='stylesheet' href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css')
+    script(href='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.js')
+    script(href='http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js')
+    style.
+        .tinta {
+            width: 50px;
+            height: 50px;
+            float: left;
+            padding: 5px;
+        }
+        .cola {
+            background-color:lightgrey;
+            width: 200px;
+            height: 30px;
+        }
+div.container
+    div.row
+        h3 Hojas:0
+        p Introduce la impresora y el texto a imprimir
+        form.form-inline(action='/send' method='get' role='form')
+            | Impresora:
+            select.form-control(name='printer')
+                option(value='0') Impresora0
+                option(value='1') Impresora1
+                option(value='2') Impresora2
+            textarea.form-control(rows='4' name='text')
+            input(type='submit' value='Enviar a impresora')
+    div.row
+        div.col-sm-4
+            div.row
+                a(href='/empty0')
+                    img(src='http://nadia.cat/copisteria/A2.jpg' alt='Procesa cola')
+            div.row
+                div.toner
+                    div.tinta(style='background-color:black') #{negro_0}
+                    div.tinta(style='background-color:yellow') #{amarillo_0}
+                    div.tinta(style='background-color:cyan') #{cyan_0}
+                    div.tinta(style='background-color:magenta') #{magenta_0}
+            div.row
+                each txt in cola_0
+                    p(class="cola" id="colaZero")= txt
+        div.col-sm-4
+            div.row
+                a(href='/empty1')
+                    img(src='http://nadia.cat/copisteria/A3.jpg' alt='Procesa cola')
+            div.row
+                div.toner
+                    div.tinta(style='background-color:black') #{negro_1}
+                    div.tinta(style='background-color:yellow') #{amarillo_1}
+                    div.tinta(style='background-color:cyan') #{cyan_1}
+                    div.tinta(style='background-color:magenta') #{magenta_1}
+            div.row
+                each txt in cola_1
+                    p.cola= txt
+        div.col-sm-4
+            div.row
+                a(href='/empty2')
+                    img(src='http://nadia.cat/copisteria/A4.jpg' alt='Procesa cola')
+            div.row
+                div.toner
+                    div.tinta(style='background-color:black') #{negro_2}
+                    div.tinta(style='background-color:yellow') #{amarillo_2}
+                    div.tinta(style='background-color:cyan') #{cyan_2}
+                    div.tinta(style='background-color:magenta') #{magenta_2}
+            div.row
+                each txt in cola_2
+                    p.cola= txt
