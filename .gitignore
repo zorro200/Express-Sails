@@ -1,5 +1,6 @@
-node_modules/
 .vscode
+node_modules/
 jsconfig.json
+node_modules.7z
 package-lock.json
 package.json
