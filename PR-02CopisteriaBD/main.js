@@ -1,8 +1,10 @@
 var express = require('express');
 var app = express();
 app.set('view engine', 'pug');
-// Import express session manager
-const sessions = require('express-session');
+// We'll use the MySql module
+var mySql = require('mysql');
+// We'll use the class that I made for the db connection
+var DBconn = require('./DBconn.class.js');
 
 /* Set all printers. 
 Each printer will have an array for store the text in it.
@@ -37,7 +39,15 @@ let vData = {
     magenta_2: printers[2]['magenta_2']
 }
 
-app.get('/', function (req, res) {
+/** We'll get the data from the DB: 
+ * @name initialVD initialViewData
+*/
+function initialVD() {
+    new DBconn();
+}
+
+app.get('/', function (req, res) {  
+    initialVD();
     res.render('index', vData);
 });
 
