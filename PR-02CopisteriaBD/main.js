@@ -4,7 +4,7 @@ app.set('view engine', 'pug');
 // We'll use the MySql module
 var mySql = require('mysql');
 // We'll use the class that I made for the db connection
-var DBconn = require('./DBconn.class.js');
+var DBconn = require('./DB.class.js');
 
 /* Set all printers. 
 Each printer will have an array for store the text in it.
