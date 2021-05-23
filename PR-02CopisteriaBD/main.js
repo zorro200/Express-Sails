@@ -88,7 +88,7 @@ app.get('/empty*', function (req, res) {
         // console.log(printers[id]['cola'])
         
         // Update the view.
-        // It goes first because, if we do that later, there won't be any text
+        // It goes first because if we do that later, there won't be any text
         inkWaste(id);
 
         // The queue with the corresponding ID will be empty with a new Array
@@ -140,9 +140,8 @@ function getVData() {
         magenta_2: printers[2]['magenta']
     }
 }
-/**
- *
- *
+/** Will sum all the lengths of each text and subtract that value to the one that
+ * refers to black ink of the corresponding printer
  * @param {*} id Printer's ID
  * @var length sum of the lengths of each text
  */
