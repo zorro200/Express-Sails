@@ -9,57 +9,33 @@ var connection = mySQL.createConnection(
     'mysql://root@localhost:3306/copisteria_node'
 );
 
+// Stablish the connection with the DB
+connection.connect(function (err) {
+    if (err) throw err;
+    console.log("Connected!");
+});
+
 /* Set all printers.
 Each printer will have an array for store the text in it.
 */
-let printers = new Array();
+var printers = new Array();
 for (var i = 0; i < 3; i++) {
     printers.push({
         'cola': new Array(),
-        'negro': 100,
-        'amarillo': 100,
-        'cyan': 100,
-        'magenta': 100
+        'negro': 0,
+        'amarillo': 0,
+        'cyan': 0,
+        'magenta': 0
     });
 }
-
-/** @type {*} All vars in index view. We store them for their subsequent treatment  */
-let vData = {
-    title: 'Copisteria',
-    cola_0: printers[0]['cola'],
-    negro_0: printers[0]['negro'],
-    amarillo_0: printers[0]['amarillo'],
-    cyan_0: printers[0]['cyan'],
-    magenta_0: printers[0]['magenta'],
-
-    cola_1: printers[1]['cola'],
-    negro_1: printers[1]['negro'],
-    amarillo_1: printers[1]['amarillo'],
-    cyan_1: printers[1]['cyan'],
-    magenta_1: printers[1]['magenta'],
-
-    cola_2: printers[2]['cola'],
-    negro_2: printers[2]['negro'],
-    amarillo_2: printers[2]['amarillo'],
-    cyan_2: printers[2]['cyan'],
-    magenta_2: printers[2]['magenta']
-}
-
 
 app.get('/', function (req, res) {
-   // Stablish the connection with the DB
-    connection.connect(function (err) {
-        if (err) throw err;
-        console.log("Connected!");
-    });
-
     connection.query('SELECT * FROM printer', function (err, result, fields) {
         if (err) throw err;
 
         // For each printer we'll set its data in the printers array
         result.forEach(printer => {
             let id = printer['id'];
-            printers[id]['cola'] = stringToArray(printer.cola);
             printers[id]['negro'] = printer.negro;
             printers[id]['amarillo'] = printer.amarillo;
             printers[id]['cyan'] = printer.cyan;
@@ -73,54 +49,75 @@ app.get('/', function (req, res) {
 });
 
 app.get('/send', function (req, res) {
-    var response = {
-        text: req.query.text,
-        printer: req.query.printer
-    };
-    let cola_x = 'cola_' + response.printer;
+    // We'll use LET to limit the scope to the use that
+    // is being given, to the variable, in this function
+    let printer = req.query.printer;
+    let text = req.query.text;
 
-    // Introduce text in the corresponding queue
-    printers[response.printer][cola_x] = response.text + "_";
-    // printers[response.printer]['cola'].push(response.text);
-    console.log(printers[response.printer][cola_x]);
-    console.log(printers);
-    console.log(getVData());
+    if (text != "") {
+        // We fill the corresponding queue with the text
+        printers[printer]['cola'].push(text);
+
+        // We get the MAX number of rows from the corresponding printer.
+        let newRow = 'SELECT MAX(fila) as maxFila FROM cola WHERE idPrinter = ' + printer;
+        connection.query(lastRow, function (err, result) {
+            if (err) throw err;
+
+            // Then, adding 1 to this number, we add the next row.
+            newRow = result[0].maxFila + 1;
+
+            // We INSERT a row with the corresponding fields (printer, newRow, text)
+            // WARNING: if we don't put this insertion inside the block that establish the new row,
+            // this one won't get the value of newRow; because it doesn't already exist.
+            let insTxt = 'INSERT INTO cola VALUES (' + printer + ','
+                + newRow + ',"' + text + '")';
+            connection.query(insTxt, function (err) {
+                if (err) throw err;
+            });
+        });
+    }
 
     res.render('index', getVData());
 });
 
 app.get('/empty*', function (req, res) {
     // The first param is the ID
-    let id = req.params[0];
-    console.log(req.params);
-    printers[id]['cola'] = new Array();
-    res.render('index', getVData);
-})
+    var id = req.params[0];
+    // console.log(req.params);
+    if (printers[id]['cola'].length > 0) {
+        // console.log(printers[id]['cola'])
+        
+        // Update the view.
+        // It goes first because, if we do that later, there won't be any text
+        inkWaste(id);
 
-// app.get("/empty0", function (req, res) {
-//     console.log(printers[0]['cola'])
-//     // To vData: we reassign the data to the corresponding
-//     // printer with a new (and, therefore, empty) array
-//     vData.cola_0 = printers[0]['cola'] = new Array();
-//     // Then, we render the view with the actual data
-//     res.render('index', vData);
-//     console.log(printers[0]['cola'])
-//     console.log(vData)
-//     // res.redirect('/');
-// });
+        // The queue with the corresponding ID will be empty with a new Array
+        printers[id]['cola'] = new Array();
 
-// app.get("/empty1", function (req, res) {
-//     vData.cola_1 = printers[1]['cola'] = new Array();
-//     res.render('index', vData);
-//     // res.redirect('/');
-// });
+        let emptyQueue = 'DELETE FROM cola WHERE idPrinter = ' + id;
+        connection.query(emptyQueue, function (err) {
+            if (err) throw err;
+            console.log("Printer " + id + " queue has been emptied");
+        });
 
-// app.get("/empty2", function (req, res) {
-//     vData.cola_2 = printers[2]['cola'] = new Array();
-//     res.render('index', vData);
-//     // res.redirect('/');
-// });
+        // Update the toners
+        let updToners = 'UPDATE printer SET negro = ' + printers[id]['negro'] + ' WHERE id = ' + id;
+        connection.query(updToners, function (err) {
+            if (err) throw err;
+            console.log("Printer " + id + " toners has been updated");
+        });
+    } else {
+        console.log("Do not empty a void queue");
+    }
 
+    // Then, we render the view with the actual data
+    res.render('index', getVData());
+});
+
+
+/** We get all data for its subsequent showed
+ * @return {*} All vars in index view. We store them for their subsequent treatment
+ */
 function getVData() {
     return {
         title: 'Copisteria',
@@ -129,13 +126,13 @@ function getVData() {
         amarillo_0: printers[0]['amarillo'],
         cyan_0: printers[0]['cyan'],
         magenta_0: printers[0]['magenta'],
-    
+
         cola_1: printers[1]['cola'],
         negro_1: printers[1]['negro'],
         amarillo_1: printers[1]['amarillo'],
         cyan_1: printers[1]['cyan'],
         magenta_1: printers[1]['magenta'],
-    
+
         cola_2: printers[2]['cola'],
         negro_2: printers[2]['negro'],
         amarillo_2: printers[2]['amarillo'],
@@ -143,14 +140,22 @@ function getVData() {
         magenta_2: printers[2]['magenta']
     }
 }
-
-function stringToArray(txt) {
-    var res = txt.split("_");
-    if (res[(res.length) - 1] == "") {
-        res.splice((res.length) - 1, res.length);
-    }
-    return res;
+/**
+ *
+ *
+ * @param {*} id Printer's ID
+ * @var length sum of the lengths of each text
+ */
+function inkWaste(id) {
+    let length = 0;
+    printers[id]['cola'].forEach(txt => {
+        // console.log(txt.length);
+        length += txt.length;
+    });
+    // console.log(length);
+    printers[id]['negro'] -= length;
 }
+
 
 /** @type {*} Administration of server connection */
 var server = app.listen(8081, function () {
